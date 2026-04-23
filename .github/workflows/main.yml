@@ -23,7 +23,7 @@ jobs:
     - name: Build APK
       run: |
         # Gradle wrapper তৈরি এবং বিল্ড রান করা
-        gradle assembleDebug
+        gradle
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
