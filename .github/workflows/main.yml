@@ -3,9 +3,7 @@ name: Build Android APK
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-  workflow_dispatch: # এটি আপনাকে গিটহাব থেকে ম্যানুয়ালি রান করার সুযোগ দেবে
+  workflow_dispatch:
 
 jobs:
   build:
@@ -20,23 +18,17 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        cache: gradle
 
-    - name: Grant Execute Permission for Gradlew
-      # যদি আপনার রিপোজিটরিতে gradlew ফাইল থাকে তবে এটি কাজ করবে
-      run: chmod +x gradlew || true
+    - name: Setup Gradle
+      uses: gradle/gradle-build-action@v3
+      with:
+        gradle-version: 8.5 # গ্র্যাডল ভার্সন এখানে ফিক্সড করে দিলাম
 
-    - name: Build with Gradle
-      # এখানে --stacktrace যোগ করা হয়েছে যাতে এরর হলে বিস্তারিত বোঝা যায়
-      run: |
-        if [ -f "./gradlew" ]; then
-          ./gradlew assembleDebug --stacktrace
-        else
-          gradle assembleDebug --stacktrace
-        fi
+    - name: Build APK
+      run: gradle assembleDebug --stacktrace
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: System-Optimizer-Debug-APK
+        name: System-Optimizer-APK
         path: app/build/outputs/apk/debug/app-debug.apk
