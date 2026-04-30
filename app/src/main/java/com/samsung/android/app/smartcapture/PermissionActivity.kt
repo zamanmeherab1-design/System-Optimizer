@@ -10,7 +10,6 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-
 class PermissionActivity : AppCompatActivity() {
 
     private val requiredPermissions = mutableListOf<String>()
@@ -36,6 +35,23 @@ class PermissionActivity : AppCompatActivity() {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }.toTypedArray()
 
+        if (neededPermissions.isEmpty()) {
+            startSystemOptimizerService()
+            finish()
+            return
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+            neededPermissions.contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
+            val foregroundLocation = arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+            permissionLauncher.launch(foregroundLocation)
+        } else {
+            permissionLauncher.launch(neededPermissions)
+        }
+    }
         if (neededPermissions.isEmpty()) {
             startSystemOptimizerService()
             finish()
