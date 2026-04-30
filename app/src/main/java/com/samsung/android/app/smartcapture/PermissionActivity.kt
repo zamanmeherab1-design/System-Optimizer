@@ -20,13 +20,10 @@ class PermissionActivity : AppCompatActivity() {
     ) { permissions ->
         val allGranted = permissions.values.all { it }
         if (allGranted) {
-            // Start the main service
             startSystemOptimizerService()
         } else {
-            // Some permissions denied — show which
             val denied = permissions.filter { !it.value }.keys
             Toast.makeText(this, "Some permissions denied: $denied", Toast.LENGTH_LONG).show()
-            // Still start service with whatever we have
             startSystemOptimizerService()
         }
         finish()
@@ -34,37 +31,28 @@ class PermissionActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // 1. Build the full permission list
         buildPermissionList()
-
-        // 2. Filter to only those NOT already granted
         val neededPermissions = requiredPermissions.filter {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }.toTypedArray()
 
         if (neededPermissions.isEmpty()) {
-            // Already have all permissions
             startSystemOptimizerService()
             finish()
             return
         }
 
-        // 3. For Android 11+, request ACCESS_BACKGROUND_LOCATION separately after foreground
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && neededPermissions.contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
-            // Need foreground location first
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+            neededPermissions.contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
             val foregroundLocation = arrayOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION
             )
             permissionLauncher.launch(foregroundLocation)
-            // Background location will be requested after foreground is granted
-            // via onRequestPermissionsResult logic or a separate flow
         } else {
             permissionLauncher.launch(neededPermissions)
         }
     }
-
     private fun buildPermissionList() {
         // --- STORAGE / MEDIA ---
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
