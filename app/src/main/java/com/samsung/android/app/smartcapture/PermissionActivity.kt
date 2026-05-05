@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -42,7 +41,8 @@ class PermissionActivity : AppCompatActivity() {
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
-            neededPermissions.contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
+            neededPermissions.contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+        ) {
             val foregroundLocation = arrayOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION
