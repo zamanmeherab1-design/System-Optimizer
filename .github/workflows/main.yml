@@ -23,9 +23,9 @@ jobs:
       uses: gradle/actions/setup-gradle@v4
       with:
         gradle-version: 8.5
-
-    - name: Make gradlew executable
-      run: chmod +x gradlew
+        gradle-home-cache-cleanup: true
+        # Disable wrapper validation since we're using a custom jar
+        validate-wrapper-jar: false
 
     - name: Build APK
       run: ./gradlew assembleDebug --stacktrace
