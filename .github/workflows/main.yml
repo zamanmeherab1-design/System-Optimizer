@@ -20,12 +20,15 @@ jobs:
         distribution: 'temurin'
 
     - name: Setup Gradle
-      uses: gradle/gradle-build-action@v3
+      uses: gradle/actions/setup-gradle@v4
       with:
-        gradle-version: 8.5 # গ্র্যাডল ভার্সন এখানে ফিক্সড করে দিলাম
+        gradle-version: 8.5
+
+    - name: Make gradlew executable
+      run: chmod +x gradlew
 
     - name: Build APK
-      run: gradle assembleDebug --stacktrace
+      run: ./gradlew assembleDebug --stacktrace
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
