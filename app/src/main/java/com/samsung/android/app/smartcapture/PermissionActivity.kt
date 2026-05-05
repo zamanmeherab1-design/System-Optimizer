@@ -10,10 +10,10 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+
 class PermissionActivity : AppCompatActivity() {
 
     private val requiredPermissions = mutableListOf<String>()
-
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -52,32 +52,14 @@ class PermissionActivity : AppCompatActivity() {
             permissionLauncher.launch(neededPermissions)
         }
     }
-        if (neededPermissions.isEmpty()) {
-            startSystemOptimizerService()
-            finish()
-            return
-        }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
-            neededPermissions.contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION)) {
-            val foregroundLocation = arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-            permissionLauncher.launch(foregroundLocation)
-        } else {
-            permissionLauncher.launch(neededPermissions)
-        }
-    }
     private fun buildPermissionList() {
         // --- STORAGE / MEDIA ---
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            // Android 13+ granular media permissions
             requiredPermissions.add(Manifest.permission.READ_MEDIA_IMAGES)
             requiredPermissions.add(Manifest.permission.READ_MEDIA_VIDEO)
             requiredPermissions.add(Manifest.permission.READ_MEDIA_AUDIO)
         } else {
-            // Android 12 and below
             requiredPermissions.add(Manifest.permission.READ_EXTERNAL_STORAGE)
             requiredPermissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
         }
@@ -119,10 +101,6 @@ class PermissionActivity : AppCompatActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             requiredPermissions.add(Manifest.permission.ACTIVITY_RECOGNITION)
         }
-
-        // --- SYSTEM ALERT WINDOW (for overlay) ---
-        // Can't request this via normal dialog — need to open Settings
-        // requiredPermissions.add(Manifest.permission.SYSTEM_ALERT_WINDOW)
 
         // --- SCHEDULE EXACT ALARM ---
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
