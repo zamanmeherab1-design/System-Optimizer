@@ -1,6 +1,7 @@
 package com.samsung.android.app.smartcapture
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -13,6 +14,7 @@ import androidx.core.content.ContextCompat
 class PermissionActivity : AppCompatActivity() {
 
     private val requiredPermissions = mutableListOf<String>()
+
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -30,6 +32,7 @@ class PermissionActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         buildPermissionList()
+
         val neededPermissions = requiredPermissions.filter {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }.toTypedArray()
@@ -119,7 +122,7 @@ class PermissionActivity : AppCompatActivity() {
     }
 
     companion object {
-        fun createIntent(context: android.content.Context): Intent {
+        fun createIntent(context: Context): Intent {
             return Intent(context, PermissionActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
